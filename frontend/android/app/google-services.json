@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "950666227466",
+    "project_id": "future-find-1ada1",
+    "storage_bucket": "future-find-1ada1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:950666227466:android:257453b0b9822f22fb94f3",
+        "android_client_info": {
+          "package_name": "futurefind.v1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "950666227466-ppgluk68c1vnn714p8vko3rom2otk7ed.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "futurefind.v1",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "950666227466-smoakr16tall0tef1nepv72vj941l45u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOhJNvjk6GH8mT8JBHAEWfbEPA4aLNO5I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "950666227466-smoakr16tall0tef1nepv72vj941l45u.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "950666227466-p4p0u9f4446csmrqns89vi5p0j7d209c.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.FutureFind.FutureFind",
+                "app_store_id": "6745416212"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

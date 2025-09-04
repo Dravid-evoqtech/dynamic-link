@@ -1,0 +1,354 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Install FutureFind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+    p {
+      margin-bottom: 20px;
+      opacity: 0.9;
+    }
+    .button {
+      display: inline-block;
+      padding: 15px 30px;
+      margin: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .hidden {
+      display: none;
+    }
+    .loading {
+      opacity: 0.7;
+    }
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top: 2px solid white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 FutureFind</h1>
+    <p id="status">Loading...</p>
+    
+    <div id="appInstalled" class="hidden">
+      <p>Great! Opening the app for you...</p>
+      <a href="#" id="openAppBtn" class="button">Open App</a>
+    </div>
+    
+         <div id="appNotInstalled" class="hidden">
+       <p>Install FutureFind to claim your referral reward!</p>
+       <a href="#" id="tryAgainBtn" class="button">Try Opening App Again</a>
+       <a href="#" id="downloadIOS" class="button hidden">Download for iOS</a>
+       <a href="#" id="downloadAndroid" class="button hidden">Download for Android</a>
+     </div>
+  </div>
+
+  <script>
+         // Configuration from backend
+     const config = {
+       token: "<%= token %>",
+       platform: "<%= platform %>",
+       isMobile: <%= isMobile %>,
+       isInAppBrowser: <%= isInAppBrowser %>,
+       appStoreUrl: "<%= appStoreUrl %>",
+       playStoreUrl: "<%= playStoreUrl %>",
+       deepLinkScheme: "<%= deepLinkScheme %>",
+       detectionTimeout: <%= detectionTimeout %>,
+       enableSmartDetection: <%= enableSmartDetection %>,
+       trackingId: "<%= trackingId %>"
+     };
+    
+    let appInstalled = false;
+    let detectionComplete = false;
+    let detectionStartTime = Date.now();
+    
+    console.log("Install page config:", config);
+    
+    // Save token locally for app to retrieve
+    if (config.token) {
+      try { 
+        localStorage.setItem("futurefind_referral_token", config.token); 
+        sessionStorage.setItem("futurefind_referral_token", config.token);
+      } catch (e) {
+        console.log("Could not save token to storage");
+      }
+    }
+    
+    function showAppInstalled() {
+      document.getElementById('status').textContent = 'App detected!';
+      document.getElementById('appInstalled').classList.remove('hidden');
+      document.getElementById('appNotInstalled').classList.add('hidden');
+    }
+    
+    function showAppNotInstalled() {
+      document.getElementById('status').textContent = 'App not installed';
+      document.getElementById('appInstalled').classList.add('hidden');
+      document.getElementById('appNotInstalled').classList.remove('hidden');
+      
+      // Show appropriate download button based on platform
+      if (config.platform === 'ios') {
+        document.getElementById('downloadIOS').classList.remove('hidden');
+      } else if (config.platform === 'android') {
+        document.getElementById('downloadAndroid').classList.remove('hidden');
+      } else {
+        // Desktop - show both options
+        document.getElementById('downloadIOS').classList.remove('hidden');
+        document.getElementById('downloadAndroid').classList.remove('hidden');
+      }
+    }
+    
+    function trackDetectionResult(appDetected, detectionTime) {
+      // Send analytics to backend
+      fetch('/app-detection/track', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          deviceFingerprint: generateDeviceFingerprint(),
+          appDetected,
+          detectionTime,
+          platform: config.platform,
+          trackingId: config.trackingId
+        })
+      }).catch(err => console.log('Analytics tracking failed:', err));
+    }
+    
+    function generateDeviceFingerprint() {
+      // Simple device fingerprint
+      return navigator.userAgent + navigator.language + screen.width + screen.height;
+    }
+    
+         function attemptToOpenApp() {
+       if (!config.enableSmartDetection) {
+         showAppNotInstalled();
+         return;
+       }
+       
+       const deepLink = config.token 
+         ? `${config.deepLinkScheme}?token=${encodeURIComponent(config.token)}`
+         : config.deepLinkScheme;
+       
+       console.log("Attempting to open app with deep link:", deepLink);
+       console.log("Platform:", config.platform, "InApp:", config.isInAppBrowser);
+       
+       // For in-app browsers, try multiple detection methods
+       if (config.isInAppBrowser) {
+         attemptInAppBrowserDetection(deepLink);
+         return;
+       }
+       
+       // Create a hidden iframe to attempt the deep link
+       const iframe = document.createElement('iframe');
+       iframe.style.display = 'none';
+       iframe.src = deepLink;
+       document.body.appendChild(iframe);
+       
+       // Set up detection based on platform
+       const startTime = Date.now();
+       let hasFocus = true;
+       let detectionAttempts = 0;
+       
+       // Platform-specific detection strategy
+       const detectionStrategy = config.platform === 'ios' ? 'visibility_change' : 
+                                config.platform === 'android' ? 'blur_event' : 'hybrid';
+       
+       // Listen for page visibility changes (iOS optimized)
+       const handleVisibilityChange = () => {
+         if (document.hidden) {
+           hasFocus = false;
+           appInstalled = true;
+           showAppInstalled();
+           detectionComplete = true;
+           trackDetectionResult(true, Date.now() - startTime);
+         }
+       };
+       
+       // Listen for page blur (Android optimized)
+       const handleBlur = () => {
+         hasFocus = false;
+         appInstalled = true;
+         showAppInstalled();
+         detectionComplete = true;
+         trackDetectionResult(true, Date.now() - startTime);
+       };
+       
+       // Listen for page focus (fallback detection)
+       const handleFocus = () => {
+         // If we regain focus quickly, app might not be installed
+         if (detectionAttempts < 2) {
+           detectionAttempts++;
+           setTimeout(() => {
+             if (hasFocus && !detectionComplete) {
+               // Try again with direct window.location
+               window.location.href = deepLink;
+             }
+           }, 1000);
+         }
+       };
+       
+       // Apply detection strategy
+       if (detectionStrategy === 'visibility_change' || detectionStrategy === 'hybrid') {
+         document.addEventListener('visibilitychange', handleVisibilityChange);
+       }
+       if (detectionStrategy === 'blur_event' || detectionStrategy === 'hybrid') {
+         window.addEventListener('blur', handleBlur);
+       }
+       window.addEventListener('focus', handleFocus);
+       
+       // Optimized timeout based on platform
+       setTimeout(() => {
+         if (!detectionComplete) {
+           const timeElapsed = Date.now() - startTime;
+           
+           // If we still have focus after timeout, app is likely not installed
+           if (hasFocus && timeElapsed > config.detectionTimeout) {
+             appInstalled = false;
+             showAppNotInstalled();
+             detectionComplete = true;
+             trackDetectionResult(false, timeElapsed);
+           }
+         }
+         
+         // Clean up
+         document.removeEventListener('visibilitychange', handleVisibilityChange);
+         window.removeEventListener('blur', handleBlur);
+         window.removeEventListener('focus', handleFocus);
+         if (iframe.parentNode) {
+           iframe.parentNode.removeChild(iframe);
+         }
+       }, config.detectionTimeout + 1000); // Increased buffer
+     }
+     
+     function attemptInAppBrowserDetection(deepLink) {
+       console.log("Using in-app browser detection strategy");
+       
+       // For in-app browsers, try multiple approaches
+       const startTime = Date.now();
+       let detectionComplete = false;
+       
+       // Method 1: Try iframe first
+       const iframe = document.createElement('iframe');
+       iframe.style.display = 'none';
+       iframe.src = deepLink;
+       document.body.appendChild(iframe);
+       
+       // Method 2: Try window.location after a delay
+       setTimeout(() => {
+         if (!detectionComplete) {
+           console.log("Trying direct window.location for in-app browser");
+           window.location.href = deepLink;
+         }
+       }, 2000);
+       
+       // Method 3: Show fallback after longer timeout
+       setTimeout(() => {
+         if (!detectionComplete) {
+           console.log("In-app browser: showing fallback options");
+           showAppNotInstalled();
+           detectionComplete = true;
+           trackDetectionResult(false, Date.now() - startTime);
+         }
+         
+         // Clean up
+         if (iframe.parentNode) {
+           iframe.parentNode.removeChild(iframe);
+         }
+       }, config.detectionTimeout + 2000);
+       
+       // Listen for any focus/blur events as fallback
+       const handleInAppDetection = () => {
+         if (!detectionComplete) {
+           detectionComplete = true;
+           showAppInstalled();
+           trackDetectionResult(true, Date.now() - startTime);
+         }
+       };
+       
+       window.addEventListener('blur', handleInAppDetection);
+       document.addEventListener('visibilitychange', handleInAppDetection);
+     }
+    
+    // Set up button handlers
+    document.getElementById('openAppBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      const deepLink = config.token 
+        ? `${config.deepLinkScheme}?token=${encodeURIComponent(config.token)}`
+        : config.deepLinkScheme;
+      window.location.href = deepLink;
+    });
+    
+    document.getElementById('downloadIOS').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = config.appStoreUrl;
+    });
+    
+         document.getElementById('downloadAndroid').addEventListener('click', (e) => {
+       e.preventDefault();
+       window.location.href = config.playStoreUrl;
+     });
+     
+     document.getElementById('tryAgainBtn').addEventListener('click', (e) => {
+       e.preventDefault();
+       document.getElementById('status').innerHTML = '<span class="spinner"></span>Trying to open app...';
+       attemptToOpenApp();
+     });
+    
+    // Start detection
+    if (config.isMobile) {
+      document.getElementById('status').innerHTML = '<span class="spinner"></span>Checking if app is installed...';
+      // Small delay to ensure page is fully loaded
+      setTimeout(attemptToOpenApp, 500);
+    } else {
+      // Desktop - show download options immediately
+      showAppNotInstalled();
+    }
+  </script>
+</body>
+</html>

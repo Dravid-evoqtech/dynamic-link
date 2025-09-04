@@ -1,0 +1,261 @@
+<!-- <!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Install FutureFind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <h1>Install FutureFind</h1>
+  <p>Install the app to claim your referral.</p>
+
+  <button id="openAppBtn">Open App</button>
+
+  <script>
+    const token = "<%= token %>";
+    const appStoreUrl = "<%= appStoreUrl %>";
+    const playStoreUrl = "<%= playStoreUrl %>";
+
+    function openApp() {
+      // build deep link
+      const deepLink = token
+        ? `FutureFind://signup?token=${encodeURIComponent(token)}`
+        : `FutureFind://signup`;
+
+      // try opening the app
+      window.location = deepLink;
+
+      // fallback: if not installed, redirect to store
+      setTimeout(() => {
+        if (/android/i.test(navigator.userAgent)) {
+          window.location = playStoreUrl;
+        } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+          window.location = appStoreUrl;
+        }
+      }, 1500); // give OS ~1.5s to handle deep link
+    }
+
+    document.getElementById("openAppBtn").addEventListener("click", openApp);
+  </script>
+</body>
+</html> -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Install FutureFind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+    h1 {
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+    p {
+      margin-bottom: 20px;
+      opacity: 0.9;
+    }
+    .button {
+      display: inline-block;
+      padding: 15px 30px;
+      margin: 10px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      text-decoration: none;
+      border-radius: 25px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      font-weight: 600;
+    }
+    .button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .hidden {
+      display: none;
+    }
+    .loading {
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 FutureFind</h1>
+    <p id="status">Checking if app is installed...</p>
+    
+    <div id="appInstalled" class="hidden">
+      <p>Great! Opening the app for you...</p>
+      <a href="#" id="openAppBtn" class="button">Open App</a>
+    </div>
+    
+    <div id="appNotInstalled" class="hidden">
+      <p>Install FutureFind to claim your referral reward!</p>
+      <a href="#" id="downloadIOS" class="button hidden">Download for iOS</a>
+      <a href="#" id="downloadAndroid" class="button hidden">Download for Android</a>
+    </div>
+  </div>
+
+  <script>
+    const token = "<%= token %>";
+    const appStoreUrl = "<%= appStoreUrl %>";
+    const playStoreUrl = "<%= playStoreUrl %>";
+    
+    let appInstalled = false;
+    let detectionComplete = false;
+    
+    // Detect platform
+    const ua = navigator.userAgent || '';
+    const isIOS = /iphone|ipad|ipod/i.test(ua);
+    const isAndroid = /android/i.test(ua);
+    const isMobile = isIOS || isAndroid;
+    
+    console.log("Token:", token);
+    console.log("Platform:", isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop');
+    
+    // Save token locally for app to retrieve
+    if (token) {
+      try { 
+        localStorage.setItem("futurefind_referral_token", token); 
+        sessionStorage.setItem("futurefind_referral_token", token);
+      } catch (e) {
+        console.log("Could not save token to storage");
+      }
+    }
+    
+    function showAppInstalled() {
+      document.getElementById('status').textContent = 'App detected!';
+      document.getElementById('appInstalled').classList.remove('hidden');
+      document.getElementById('appNotInstalled').classList.add('hidden');
+    }
+    
+    function showAppNotInstalled() {
+      document.getElementById('status').textContent = 'App not installed';
+      document.getElementById('appInstalled').classList.add('hidden');
+      document.getElementById('appNotInstalled').classList.remove('hidden');
+      
+      // Show appropriate download button
+      if (isIOS) {
+        document.getElementById('downloadIOS').classList.remove('hidden');
+      } else if (isAndroid) {
+        document.getElementById('downloadAndroid').classList.remove('hidden');
+      } else {
+        // Desktop - show both options
+        document.getElementById('downloadIOS').classList.remove('hidden');
+        document.getElementById('downloadAndroid').classList.remove('hidden');
+      }
+    }
+    
+    function attemptToOpenApp() {
+      if (!isMobile) {
+        showAppNotInstalled();
+        return;
+      }
+      
+      const deepLink = token 
+        ? `FutureFind://SignUp?token=${encodeURIComponent(token)}`
+        : `FutureFind://SignUp`;
+      
+      console.log("Attempting to open app with deep link:", deepLink);
+      
+      // Create a hidden iframe to attempt the deep link
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = deepLink;
+      document.body.appendChild(iframe);
+      
+      // Set up detection timeout
+      const startTime = Date.now();
+      let hasFocus = true;
+      
+      // Listen for page visibility changes
+      const handleVisibilityChange = () => {
+        if (document.hidden) {
+          hasFocus = false;
+          appInstalled = true;
+          showAppInstalled();
+          detectionComplete = true;
+        }
+      };
+      
+      // Listen for page blur (app switch)
+      const handleBlur = () => {
+        hasFocus = false;
+        appInstalled = true;
+        showAppInstalled();
+        detectionComplete = true;
+      };
+      
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('blur', handleBlur);
+      
+      // Fallback timeout
+      setTimeout(() => {
+        if (!detectionComplete) {
+          const timeElapsed = Date.now() - startTime;
+          
+          // If we still have focus after 2.5 seconds, app is likely not installed
+          if (hasFocus && timeElapsed > 2500) {
+            appInstalled = false;
+            showAppNotInstalled();
+            detectionComplete = true;
+          }
+        }
+        
+        // Clean up
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('blur', handleBlur);
+        if (iframe.parentNode) {
+          iframe.parentNode.removeChild(iframe);
+        }
+      }, 3000);
+    }
+    
+    // Set up button handlers
+    document.getElementById('openAppBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+              const deepLink = token 
+          ? `FutureFind://SignUp?token=${encodeURIComponent(token)}`
+          : `FutureFind://SignUp`;
+      window.location.href = deepLink;
+    });
+    
+    document.getElementById('downloadIOS').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = appStoreUrl;
+    });
+    
+    document.getElementById('downloadAndroid').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = playStoreUrl;
+    });
+    
+    // Start detection
+    if (isMobile) {
+      // Small delay to ensure page is fully loaded
+      setTimeout(attemptToOpenApp, 500);
+    } else {
+      // Desktop - show download options immediately
+      showAppNotInstalled();
+    }
+  </script>
+</body>
+</html>

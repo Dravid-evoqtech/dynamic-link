@@ -1,0 +1,32 @@
+# Normalize line endings for all text files
+* text=auto
+
+# Ensure consistent handling of source code files
+*.js     text
+*.ts     text
+*.json   text
+*.jsx    text
+*.tsx    text
+*.html   text
+*.css    text
+*.scss   text
+*.md     text
+*.yml    text
+*.yaml   text
+
+# Prevent Git from auto-resolving merge conflicts silently
+*.json   merge=manual
+*.lock   merge=manual
+*.env    merge=manual
+
+# Treat binary files properly
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.svg    binary
+*.ico    binary
+*.pdf    binary
+
+# Optional: Combine changes in .env files if needed
+# *.env merge=union

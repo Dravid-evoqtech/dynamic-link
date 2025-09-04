@@ -1,0 +1,102 @@
+<!-- <!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Install MyApp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <h1>Install FutureFind</h1>
+  <p>Install the app to claim your referral.</p>
+
+  <p>Click the button below to install the app from the App Store.</p>
+  <a id="downloadIOS" href="<%= process.env.APP_STORE_URL %>">Download iOS</a>
+
+  <p>Or click the button below to install the app from the Play Store.</p>
+  <a id="downloadAndroid" href="<%= process.env.PLAY_STORE_URL %>">Download Android</a>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    if (token) {
+      try { localStorage.setItem("myapp_referral_token", token); } catch (e) {}
+    }
+
+    const ua = navigator.userAgent || '';
+
+    if (/android/i.test(ua)) {
+      document.getElementById('downloadAndroid').href =
+        window.location.origin + '/play-redirect?token=' + encodeURIComponent(token || '');
+    } else if (/iphone|ipad|ipod/i.test(ua)) {
+      document.getElementById('downloadIOS').href =
+        window.location.origin + '/ios-redirect?token=' + encodeURIComponent(token || '');
+    }
+
+    // Try open app immediately (if installed)
+    if (/android|iphone|ipad|ipod/i.test(ua)) {
+      setTimeout(() => {
+        const deepLink = token
+          ? `myapp://signup?token=${encodeURIComponent(token)}`
+          : `myapp://signup`;
+        window.location = deepLink;
+      }, 600);
+    }
+  </script>
+</body>
+</html> -->
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Install FutureFind</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+  <h1>Install FutureFind</h1>
+  <p>Install the app to claim your referral.</p>
+
+  <p>Click the button below to install the app from the App Store.</p>
+  <a id="downloadIOS" href=process.env.APP_STORE_URL>Download iOS</a>
+
+  <p>Or click the button below to install the app from the Play Store.</p>
+  <a id="downloadAndroid" href=process.env.PLAY_STORE_URL>Download Android</a>
+
+  <script>
+    const token =  params.get("token");
+    const appStoreUrl = process.env.APP_STORE_URL;
+    const playStoreUrl = process.env.PLAY_STORE_URL;
+
+    console.log("Token:", token);
+    console.log("App Store URL:", appStoreUrl);
+    console.log("Play Store URL:", playStoreUrl);
+
+    // Save token + urls locally
+    if (token) {
+      try { localStorage.setItem("myapp_referral_token", token); } catch (e) {}
+    }
+    try { localStorage.setItem("myapp_app_store_url", appStoreUrl); } catch (e) {}
+    try { localStorage.setItem("myapp_play_store_url", playStoreUrl); } catch (e) {}
+
+    const ua = navigator.userAgent || '';
+
+    // Update button links to go via backend redirect (with token)
+    if (/android/i.test(ua)) {
+      document.getElementById('downloadAndroid').href =
+        `/referral/play-redirect?token=${encodeURIComponent(token || '')}`;
+    } else if (/iphone|ipad|ipod/i.test(ua)) {
+      document.getElementById('downloadIOS').href =
+        `/referral/ios-redirect?token=${encodeURIComponent(token || '')}`;
+    }
+
+    // Try to open app immediately (if installed)
+    if (/android|iphone|ipad|ipod/i.test(ua)) {
+      setTimeout(() => {
+        const deepLink = token
+          ? `futurefind://signup?token=${encodeURIComponent(token)}`
+          : `futurefind://signup`;
+        window.location = deepLink;
+      }, 600);
+    }
+  </script>
+</body>
+</html>

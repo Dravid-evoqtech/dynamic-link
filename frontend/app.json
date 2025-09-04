@@ -1,0 +1,83 @@
+{
+  "expo": {
+    "name": "FutureFind",
+    "slug": "FutureFind",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/FutureFind_Logo.png",
+    "scheme": "FutureFind",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.FutureFind.FutureFind",
+      "buildNumber": "1",
+      "googleServicesFile": "./app/GoogleService-Info.plist",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "FutureFind needs access to your location to find nearby opportunities and provide location-based services.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "FutureFind needs access to your location to find nearby opportunities and provide location-based services.",
+        "NSLocationAlwaysUsageDescription": "FutureFind needs access to your location to provide location-based services.",
+        "NSPhotoLibraryUsageDescription": "FutureFind needs access to your photo library to allow you to select and upload profile pictures.",
+        "NSCameraUsageDescription": "FutureFind needs access to your camera to allow you to take profile pictures.",
+        "UIBackgroundModes": ["remote-notification"],
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLName": "FutureFind",
+            "CFBundleURLSchemes": ["FutureFind"]
+          }
+        ]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/FutureFind_Logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "futurefind.v1",
+      "versionCode": 1,
+      "googleServicesFile": "./app/google-services.json"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/messaging",
+      "@react-native-google-signin/google-signin",
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FutureFind needs access to your photo library to allow you to select and upload profile pictures.",
+          "cameraPermission": "FutureFind needs access to your camera to allow you to take profile pictures."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FutureFind to use your location to find nearby opportunities and provide location-based services.",
+          "locationAlwaysPermission": "Allow FutureFind to use your location in the background to provide location-based services.",
+          "locationWhenInUsePermission": "Allow FutureFind to use your location to find nearby opportunities and provide location-based services.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
